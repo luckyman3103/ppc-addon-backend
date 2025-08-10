@@ -11,11 +11,8 @@ def get_ads_accounts():
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type'
     }
-
     if request.method == 'OPTIONS':
         return make_response('', 204, headers)
-
-    LOGIN_CUSTOMER_ID = "9042451471"
 
     request_json = request.get_json(silent=True)
     if not request_json or 'accessToken' not in request_json or 'developerToken' not in request_json:
@@ -24,14 +21,13 @@ def get_ads_accounts():
     access_token = request_json['accessToken']
     developer_token = request_json['developerToken']
 
-    # --- ГЛАВНОЕ ИЗМЕНЕНИЕ ЗДЕСЬ ---
     api_url = 'https://googleads.googleapis.com/v21/customers:listAccessibleCustomers'
     
+    # --- ИЗМЕНЕНИЕ ЗДЕСЬ: ОСТАВЛЯЕМ ТОЛЬКО МИНИМУМ ---
     api_headers = {
         'Authorization': f'Bearer {access_token}',
         'developer-token': developer_token,
-        'login-customer-id': LOGIN_CUSTOMER_ID,
-        'Accept': 'application/json'
+        'Accept': 'application/json' 
     }
 
     try:

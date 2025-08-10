@@ -22,14 +22,14 @@ def get_ads_accounts():
     developer_token = request_json['developerToken']
 
     api_url = 'https://googleads.googleapis.com/v21/customers:listAccessibleCustomers'
-    
-    # --- ИЗМЕНЕНИЕ ЗДЕСЬ: ОСТАВЛЯЕМ ТОЛЬКО МИНИМУМ ---
+
+    # --- ГЛАВНОЕ ИЗМЕНЕНИЕ: УБИРАЕМ ВСЕ ЛИШНЕЕ ---
+    # Оставляем только те заголовки, которые нужны для ЛЮБОГО пользователя
     api_headers = {
-    'Authorization': f'Bearer {access_token}',
-    'developer-token': developer_token,
-    'login-customer-id': '9042451471', # Возвращаем ID твоего MCC
-    'Accept': 'application/json'
-}
+        'Authorization': f'Bearer {access_token}',
+        'developer-token': developer_token,
+        'Accept': 'application/json' 
+    }
 
     try:
         response = requests.get(api_url, headers=api_headers)
@@ -37,7 +37,7 @@ def get_ads_accounts():
 
         api_data = response.json()
         customer_ids = [name.split('/')[1] for name in api_data.get("resourceNames", [])]
-        
+
         return jsonify({'accounts': customer_ids}), 200, headers
 
     except requests.exceptions.HTTPError as err:

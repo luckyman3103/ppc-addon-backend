@@ -25,10 +25,11 @@ def get_ads_accounts():
     
     # --- ИЗМЕНЕНИЕ ЗДЕСЬ: ОСТАВЛЯЕМ ТОЛЬКО МИНИМУМ ---
     api_headers = {
-        'Authorization': f'Bearer {access_token}',
-        'developer-token': developer_token,
-        'Accept': 'application/json' 
-    }
+    'Authorization': f'Bearer {access_token}',
+    'developer-token': developer_token,
+    'login-customer-id': '9042451471', # Возвращаем ID твоего MCC
+    'Accept': 'application/json'
+}
 
     try:
         response = requests.get(api_url, headers=api_headers)

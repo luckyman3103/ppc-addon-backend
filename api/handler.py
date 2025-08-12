@@ -8,8 +8,8 @@ app = Flask(__name__)
 def build_cors_preflight_response():
     response = make_response()
     response.headers.add("Access-Control-Allow-Origin", "*")
-    response.headers.add('Access-Control-Allow-Headers', "*")
-    response.headers.add('Access-Control-Allow-Methods', "*")
+    response.headers.add('Access-Control-Allow-Headers', "Content-Type, Authorization")
+    response.headers.add('Access-Control-Allow-Methods', "POST, OPTIONS")
     return response
 
 # --- ФУНКЦИЯ 1: ПОЛУЧЕНИЕ СПИСКА АККАУНТОВ ---
@@ -18,7 +18,6 @@ def get_ads_accounts():
     if request.method == 'OPTIONS':
         return build_cors_preflight_response()
 
-    # (Логика этой функции остается без изменений)
     request_json = request.get_json(silent=True)
     if not request_json or 'accessToken' not in request_json or 'developerToken' not in request_json:
         return jsonify({'error': 'Missing tokens'}), 400
@@ -42,18 +41,15 @@ def get_ads_accounts():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# --- НОВАЯ ФУНКЦИЯ 2: СБОР КЛЮЧЕВЫХ СЛОВ ---
+# --- ФУНКЦИЯ 2: СБОР КЛЮЧЕВЫХ СЛОВ ---
 @app.route('/api/get-keyword-ideas', methods=['POST', 'OPTIONS'])
 def get_keyword_ideas():
     if request.method == 'OPTIONS':
         return build_cors_preflight_response()
 
-    # Получаем все необходимые данные от Apps Script
     request_json = request.get_json(silent=True)
-    if not request_json:
-        return jsonify({'error': 'Invalid JSON'}), 400
-
-    # Проверяем наличие всех ключей
+    if not request_json: return jsonify({'error': 'Invalid JSON'}), 400
+    
     required_keys = ['accessToken', 'developerToken', 'customerId', 'languageId', 'countryId', 'masks']
     if not all(key in request_json for key in required_keys):
         return jsonify({'error': 'Missing required parameters'}), 400
@@ -66,17 +62,14 @@ def get_keyword_ideas():
     masks = request_json['masks']
     
     keyword_results = []
-
-    # Проходим по каждой маске и делаем отдельный запрос
+    
     for mask in masks:
         api_url = f"https://googleads.googleapis.com/v21/customers/{customer_id.replace('-', '')}:generateKeywordIdeas"
-        
         payload = {
             "keywordSeed": {"keywords": [mask]},
             "language": f"languageConstants/{language_id}",
             "geoTargetConstants": [f"geoTargetConstants/{country_id}"]
         }
-        
         headers = {
             'Authorization': f'Bearer {access_token}',
             'developer-token': developer_token,
@@ -84,7 +77,6 @@ def get_keyword_ideas():
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         }
-
         try:
             response = requests.post(api_url, headers=headers, json=payload)
             response.raise_for_status()
@@ -97,10 +89,8 @@ def get_keyword_ideas():
                     "mask": mask
                 })
         except requests.exceptions.HTTPError as err:
-            # Если хоть один запрос неудачный, возвращаем ошибку
             return jsonify({'error': f'Google Ads API Error for mask "{mask}"', 'details': err.response.text}), err.response.status_code
         except Exception as e:
             return jsonify({'error': str(e)}), 500
             
-    # Возвращаем успешный результат
     return jsonify({'keywords': keyword_results}), 200

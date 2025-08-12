@@ -3,12 +3,11 @@ import requests
 
 app = Flask(__name__)
 
-# Теперь наша функция-обработчик будет одна, и она будет вызываться для любого запроса к /api/
-# Vercel направит запрос к файлу index.py, а Flask подхватит его здесь.
+# Эта функция будет вызываться для любого запроса к /api/
 @app.route('/', defaults={'path': ''}, methods=['POST', 'OPTIONS'])
 @app.route('/<path:path>', methods=['POST', 'OPTIONS'])
 def handler(path):
-    # Стандартная обработка CORS
+    # Обработка CORS
     if request.method == 'OPTIONS':
         response = make_response()
         response.headers.add("Access-Control-Allow-Origin", "*")
@@ -17,10 +16,8 @@ def handler(path):
         return response
 
     request_json = request.get_json(silent=True)
-    if not request_json:
-        return jsonify({'error': 'Invalid JSON'}), 400
+    if not request_json: return jsonify({'error': 'Invalid JSON'}), 400
 
-    # Определяем, какую задачу выполнять, по полю 'action'
     action = request_json.get('action')
 
     if action == 'get_accounts':
@@ -30,15 +27,11 @@ def handler(path):
     else:
         return jsonify({'error': 'Invalid action specified'}), 400
 
-# Вспомогательные функции остаются без изменений
 def get_ads_accounts(data):
     access_token = data.get('accessToken')
     developer_token = data.get('developerToken')
     api_url = 'https://googleads.googleapis.com/v21/customers:listAccessibleCustomers'
-    api_headers = {
-        'Authorization': f'Bearer {access_token}',
-        'developer-token': developer_token, 'Accept': 'application/json'
-    }
+    api_headers = {'Authorization': f'Bearer {access_token}', 'developer-token': developer_token, 'Accept': 'application/json'}
     try:
         response = requests.get(api_url, headers=api_headers)
         response.raise_for_status()
@@ -76,7 +69,7 @@ def get_keyword_ideas(data):
             keyword_results.append({
                 "text": idea.get("text"),
                 "avgMonthlySearches": metrics.get("avgMonthlySearches"),
-                "mask": data.get('masks')[0] 
+                "mask": data.get('masks')[0]
             })
         return jsonify({'keywords': keyword_results})
     except requests.exceptions.HTTPError as err:

@@ -1,12 +1,14 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 import requests
 
 app = Flask(__name__)
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
+# --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
+@app.route('/', defaults={'path': ''}, methods=['POST', 'OPTIONS'])
+@app.route('/<path:path>', methods=['POST', 'OPTIONS'])
 def get_keyword_ideas(path):
-    if request.method == 'OPTIONS': # CORS preflight
+    # Обработка CORS preflight
+    if request.method == 'OPTIONS':
         headers = {'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST', 'Access-Control-Allow-Headers': 'Content-Type'}
         return ('', 204, headers)
 
@@ -18,9 +20,9 @@ def get_keyword_ideas(path):
     language_id = request_json.get('languageId')
     country_id = request_json.get('countryId')
     masks = request_json.get('masks', [])
-
+    
     keyword_results = []
-
+    
     for mask in masks:
         api_url = f"https://googleads.googleapis.com/v21/customers/{customer_id.replace('-', '')}:generateKeywordIdeas"
         payload = {"keywordSeed": {"keywords": [mask]}, "language": f"languageConstants/{language_id}", "geoTargetConstants": [f"geoTargetConstants/{country_id}"]}
@@ -36,5 +38,5 @@ def get_keyword_ideas(path):
             return jsonify({'error': f'Google Ads API Error for mask "{mask}"', 'details': err.response.text}), err.response.status_code, headers
         except Exception as e:
             return jsonify({'error': str(e)}), 500, headers
-
+    
     return jsonify({'keywords': keyword_results}), 200, headers

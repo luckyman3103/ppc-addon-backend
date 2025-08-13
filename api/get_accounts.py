@@ -1,15 +1,18 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 import requests
 
 app = Flask(__name__)
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
+# --- ИЗМЕНЕНИЕ ЗДЕСЬ: Разрешаем методы POST и OPTIONS ---
+@app.route('/', defaults={'path': ''}, methods=['POST', 'OPTIONS'])
+@app.route('/<path:path>', methods=['POST', 'OPTIONS'])
 def get_ads_accounts(path):
-    if request.method == 'OPTIONS': # CORS preflight
-        headers = {'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST', 'Access-Control-Allow-Headers': 'Content-Type'}
+    # Обработка CORS preflight
+    if request.method == 'OPTIONS':
+        headers = {'Access-Control-Allow-Origin': '*', 'Access-control-allow-headers': 'Content-Type'}
         return ('', 204, headers)
 
+    # Основная логика
     headers = {'Access-Control-Allow-Origin': '*'}
     request_json = request.get_json(silent=True)
     access_token = request_json.get('accessToken')
@@ -17,7 +20,7 @@ def get_ads_accounts(path):
 
     api_url = 'https://googleads.googleapis.com/v21/customers:listAccessibleCustomers'
     api_headers = {'Authorization': f'Bearer {access_token}', 'developer-token': developer_token, 'Accept': 'application/json'}
-
+    
     try:
         response = requests.get(api_url, headers=api_headers)
         response.raise_for_status()

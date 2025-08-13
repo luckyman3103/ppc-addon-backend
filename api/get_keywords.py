@@ -1,14 +1,13 @@
 from flask import Flask, request, jsonify, make_response
 import requests
+import time # <-- ДОБАВЛЕНО ЗДЕСЬ
 
 app = Flask(__name__)
 
-# --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
 @app.route('/', defaults={'path': ''}, methods=['POST', 'OPTIONS'])
 @app.route('/<path:path>', methods=['POST', 'OPTIONS'])
 def get_keyword_ideas(path):
-    # Обработка CORS preflight
-    if request.method == 'OPTIONS':
+    if request.method == 'OPTIONS': # CORS preflight
         headers = {'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST', 'Access-Control-Allow-Headers': 'Content-Type'}
         return ('', 204, headers)
 
@@ -38,5 +37,7 @@ def get_keyword_ideas(path):
             return jsonify({'error': f'Google Ads API Error for mask "{mask}"', 'details': err.response.text}), err.response.status_code, headers
         except Exception as e:
             return jsonify({'error': str(e)}), 500, headers
+        
+        time.sleep(1) # <-- И ДОБАВЛЕНО ЗДЕСЬ: Ждем 1 секунду перед следующим запросом
     
     return jsonify({'keywords': keyword_results}), 200, headers
